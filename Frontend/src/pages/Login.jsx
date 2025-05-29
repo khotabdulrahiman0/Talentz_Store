@@ -43,7 +43,7 @@ const Login = () => {
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     {/* Header with logo */}
                     <div className="bg-black text-white p-6">
-                        <h2 className="text-2xl font-bold text-center">ARMK</h2>
+                        <h2 className="text-2xl font-bold text-center">Talentz Store</h2>
                     </div>
 
                     {/* Form Content */}

@@ -11,55 +11,75 @@ const CollectionPage = () => {
     const { collection } = useParams();
     const [searchParams] = useSearchParams();
     const dispatch = useDispatch();
-    
     const { products, loading, error } = useSelector((state) => state.products);
     const queryParams = Object.fromEntries([...searchParams]);
-    
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const sidebarRef = useRef(null);
 
     useEffect(() => {
-        console.log("Fetching products with:", { collection, ...queryParams });
         dispatch(fetchProductsByFilters({ collection, ...queryParams }));
-    }, [dispatch, collection, JSON.stringify(queryParams)]); // ✅ Prevent infinite re-renders
+    }, [dispatch, collection, JSON.stringify(queryParams)]);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
-    const handleClickOutside = (e) => {
-        if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-            setIsSidebarOpen(false);
-        }
-    };
-
+    // For closing sidebar when clicking outside on mobile
     useEffect(() => {
+        if (!isSidebarOpen) return;
+        const handleClickOutside = (e) => {
+            if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+                setIsSidebarOpen(false);
+            }
+        };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [isSidebarOpen]);
 
     return (
-        <div className="flex flex-col lg:flex-row">
-            <button onClick={toggleSidebar} className="lg:hidden border p-2 flex justify-center items-center">
-                <FaFilter className="mr-2" /> Filters
-            </button>
-
-            <div ref={sidebarRef} className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 z-50 left-0 w-64 bg-white overflow-y-auto transition-transform duration-300 lg:static lg:translate-x-0`}>
-                <FilterSidebar />
+        <div className="flex flex-col md:flex-row gap-0 md:gap-8 bg-gray-50 min-h-screen">
+            {/* Mobile filter toggle button */}
+            <div className="block md:hidden sticky top-0 z-40 bg-white border-b">
+                <button
+                    onClick={toggleSidebar}
+                    className="flex items-center gap-2 text-indigo-600 font-semibold px-4 py-3 w-full border-b">
+                    <FaFilter className="inline-block" /> Filters
+                </button>
             </div>
 
-            <div className="flex-grow p-4">
-                <h2 className="text-2xl uppercase mb-4">All Collection</h2>
-                <SortOptions />
-                
-                {loading ? (
-                    <p>Loading products...</p>
-                ) : error ? (
-                    <p className="text-red-500">Error: {error}</p>
-                ) : products.length > 0 ? (
-                    <ProductGrid products={products} loading={loading} error={error} />
-                ) : (
-                    <p>No products found.</p>
-                )}
+            {/* Sidebar */}
+            <div
+                ref={sidebarRef}
+                className={`
+                    fixed inset-0 z-50 transition-transform duration-300
+                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                    md:relative md:translate-x-0 md:flex-shrink-0 md:w-64
+                    bg-white md:bg-transparent shadow-lg md:shadow-none
+                    md:static md:block
+                `}
+                style={{ minWidth: '16rem', maxWidth: '18rem' }}
+            >
+                <div className="h-full md:sticky md:top-4">
+                    <FilterSidebar />
+                </div>
             </div>
+
+            {/* Overlay for mobile sidebar */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/30 md:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
+            {/* Main Content */}
+            <main className="flex-1 p-4 md:p-8">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                        {collection ? collection.replace(/-/g, " ").toUpperCase() : "ALL COLLECTION"}
+                    </h2>
+                    <SortOptions />
+                </div>
+                <ProductGrid products={products} loading={loading} error={error} />
+            </main>
         </div>
     );
 };

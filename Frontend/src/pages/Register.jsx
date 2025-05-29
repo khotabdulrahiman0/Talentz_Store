@@ -80,7 +80,7 @@ const Register = () => {
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     {/* Header with logo and progress indicator */}
                     <div className="bg-black text-white p-6 relative">
-                        <h2 className="text-2xl font-bold text-center">ARMK</h2>
+                        <h2 className="text-2xl font-bold text-center">Talentz Store</h2>
                         <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
                             <div 
                                 className="h-full bg-blue-500 transition-all duration-500" 

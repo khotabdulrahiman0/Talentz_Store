@@ -1,25 +1,22 @@
 import React, { useState } from 'react';
 
+const categories = ['Purse', 'Bracelet', 'Necklace'];
+
 const AddProductPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     discountPrice: '',
-    countInStock: '',
+    stock: '',
     sku: '',
     category: '',
-    brand: '',
-    sizes: [],
     colors: [],
-    collections: '',
-    material: '',
-    gender: 'Unisex',
     images: [],
     isFeatured: false,
     isPublished: false,
@@ -29,15 +26,28 @@ const AddProductPage = () => {
       width: '',
       height: ''
     },
-    weight: ''
+    weight: '',
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: ''
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (['length', 'width', 'height'].includes(name)) {
+      setFormData(prev => ({
+        ...prev,
+        dimensions: {
+          ...prev.dimensions,
+          [name]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleArrayInput = (e, field) => {
@@ -48,30 +58,22 @@ const AddProductPage = () => {
     }));
   };
 
-  const handleeArrayInput = (e, field) => {
-    const values = e.target.value.split(',').map(item => item.trim().toUpperCase());
-    setFormData(prev => ({
-      ...prev,
-      [field]: values
-    }));
-  };
-
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
+    const uploadData = new FormData();
+    uploadData.append('image', file);
 
     setUploadingImage(true);
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/upload`, {
         method: 'POST',
-        body: formData
+        body: uploadData
       });
-      
+
       const data = await response.json();
-      
+
       if (data.imageUrl) {
         setFormData(prev => ({
           ...prev,
@@ -97,6 +99,30 @@ const AddProductPage = () => {
     setError('');
     setSuccess('');
 
+    const productData = {
+      name: formData.name,
+      description: formData.description,
+      price: Number(formData.price),
+      discountPrice: formData.discountPrice ? Number(formData.discountPrice) : undefined,
+      stock: Number(formData.stock),
+      sku: formData.sku,
+      category: formData.category,
+      colors: formData.colors,
+      images: formData.images,
+      isFeatured: formData.isFeatured,
+      isPublished: formData.isPublished,
+      tags: formData.tags,
+      dimensions: {
+        length: formData.dimensions.length ? Number(formData.dimensions.length) : undefined,
+        width: formData.dimensions.width ? Number(formData.dimensions.width) : undefined,
+        height: formData.dimensions.height ? Number(formData.dimensions.height) : undefined,
+      },
+      weight: formData.weight ? Number(formData.weight) : undefined,
+      metaTitle: formData.metaTitle,
+      metaDescription: formData.metaDescription,
+      metaKeywords: formData.metaKeywords
+    };
+
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/products`, {
         method: 'POST',
@@ -104,7 +130,7 @@ const AddProductPage = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(productData)
       });
 
       const data = await response.json();
@@ -119,15 +145,10 @@ const AddProductPage = () => {
         description: '',
         price: '',
         discountPrice: '',
-        countInStock: '',
+        stock: '',
         sku: '',
         category: '',
-        brand: '',
-        sizes: [],
         colors: [],
-        collections: '',
-        material: '',
-        gender: 'Unisex',
         images: [],
         isFeatured: false,
         isPublished: false,
@@ -137,7 +158,10 @@ const AddProductPage = () => {
           width: '',
           height: ''
         },
-        weight: ''
+        weight: '',
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: ''
       });
     } catch (err) {
       setError(err.message);
@@ -199,7 +223,6 @@ const AddProductPage = () => {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       SKU
@@ -234,7 +257,6 @@ const AddProductPage = () => {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Discount Price (₹)
@@ -248,16 +270,15 @@ const AddProductPage = () => {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Stock Quantity
                     </label>
                     <input
                       type="number"
-                      name="countInStock"
+                      name="stock"
                       placeholder="0"
-                      value={formData.countInStock}
+                      value={formData.stock}
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
@@ -283,7 +304,6 @@ const AddProductPage = () => {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                     />
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -297,101 +317,11 @@ const AddProductPage = () => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                       >
                         <option value="">Select Category</option>
-                        <option value="Top Wear">Top Wear</option>
-                        <option value="Bottom Wear">Bottom Wear</option>
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
                       </select>
                     </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Brand
-                      </label>
-                      <select
-                        name="brand"
-                        value={formData.brand}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      >
-                        <option value="" disabled>Select Brand</option>
-                        <option value="Urban Threads">Urban Threads</option>
-                        <option value="Modern Fit">Modern Fit</option>
-                        <option value="Gucci">Gucci</option>
-                        <option value="Street Style">Street Style</option>
-                        <option value="Beach Breeze">Beach Breeze</option>
-                        <option value="Fashion Insta">Fashion Insta</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Collection
-                      </label>
-                      <input
-                        type="text"
-                        name="collections"
-                        placeholder="Enter collection name"
-                        value={formData.collections}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Material
-                      </label>
-                      <select
-                        name="material"
-                        value={formData.material}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      >
-                        <option value="" disabled>Select Material</option>
-                        <option value="Cotton">Cotton</option>
-                        <option value="Wool">Wool</option>
-                        <option value="Denim">Denim</option>
-                        <option value="Polyester">Polyester</option>
-                        <option value="Silk">Silk</option>
-                        <option value="Linen">Linen</option>
-                        <option value="Viscose">Viscose</option>
-                        <option value="Fleece">Fleece</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Gender
-                      </label>
-                      <select
-                        name="gender"
-                        value={formData.gender}
-                        onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      >
-                        <option value="Men">Men</option>
-                        <option value="Women">Women</option>
-                        <option value="Unisex">Unisex</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Sizes
-                      </label>
-                      <input
-                        type="text"
-                        name="sizes"
-                        placeholder="S, M, L, XL (comma-separated)"
-                        value={formData.sizes.join(', ')}
-                        onChange={(e) => handleeArrayInput(e, 'sizes')}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                      />
-                    </div>
-
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Colors
@@ -406,6 +336,71 @@ const AddProductPage = () => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Tags
+                      </label>
+                      <input
+                        type="text"
+                        name="tags"
+                        placeholder="Gift, Festival, Ethnic (comma-separated)"
+                        value={formData.tags.join(', ')}
+                        onChange={(e) => handleArrayInput(e, 'tags')}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                      />
+                    </div>
+                    {/* <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Dimensions (cm)
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          name="length"
+                          min="0"
+                          step="any"
+                          placeholder="Length"
+                          value={formData.dimensions.length}
+                          onChange={handleInputChange}
+                          className="w-1/3 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                        />
+                        <input
+                          type="number"
+                          name="width"
+                          min="0"
+                          step="any"
+                          placeholder="Width"
+                          value={formData.dimensions.width}
+                          onChange={handleInputChange}
+                          className="w-1/3 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                        />
+                        <input
+                          type="number"
+                          name="height"
+                          min="0"
+                          step="any"
+                          placeholder="Height"
+                          value={formData.dimensions.height}
+                          onChange={handleInputChange}
+                          className="w-1/3 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                        />
+                      </div>
+                    </div> */}
+                    {/* <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Weight (grams)
+                      </label>
+                      <input
+                        type="number"
+                        name="weight"
+                        placeholder="0"
+                        value={formData.weight}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                      />
+                    </div> */}
                   </div>
                 </div>
               </div>
@@ -483,7 +478,6 @@ const AddProductPage = () => {
                       <span className="ml-2 text-gray-700 dark:text-gray-300">Published</span>
                     </label>
                   </div>
-                  
                   <div className="flex items-center space-x-2">
                     <label className="flex items-center">
                       <input
@@ -498,6 +492,37 @@ const AddProductPage = () => {
                 </div>
               </div>
             </div>
+
+            {/* SEO Meta Information - Optional */}
+            {/* <div className="mt-8">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">SEO Meta Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <input
+                  type="text"
+                  name="metaTitle"
+                  placeholder="Meta Title"
+                  value={formData.metaTitle}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                />
+                <input
+                  type="text"
+                  name="metaDescription"
+                  placeholder="Meta Description"
+                  value={formData.metaDescription}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                />
+                <input
+                  type="text"
+                  name="metaKeywords"
+                  placeholder="Meta Keywords (comma-separated)"
+                  value={formData.metaKeywords}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                />
+              </div>
+            </div> */}
 
             <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
               <button

@@ -97,7 +97,7 @@ const RazorpayButton = ({ amount, onSuccess, onError, checkoutId }) => {
         key: razorpayKey,
         amount: orderData.amount,
         currency: "INR",
-        name: "ARMK Store",
+        name: "Talentz Store",
         description: `Order Payment - Checkout ID: ${checkoutId}`,
         order_id: orderData.orderId, // Use the server-generated order ID
         handler: function (response) {
@@ -165,13 +165,13 @@ const RazorpayButton = ({ amount, onSuccess, onError, checkoutId }) => {
       </button>
       
       {/* Debug info - remove in production */}
-      <div className="mt-2 text-xs text-gray-600">
+      {/* <div className="mt-2 text-xs text-gray-600">
         <p>Amount: ₹{amount} (₹{Math.round(amount * 100)} paise)</p>
         <p>Razorpay Key: {import.meta.env.VITE_RAZORPAY_KEY ? 'Present' : 'Missing'}</p>
         <p>Script Loaded: {isScriptLoaded ? 'Yes' : 'No'}</p>
         <p>Checkout ID: {checkoutId || 'Not provided'}</p>
         <p>Backend URL: {import.meta.env.VITE_BACKEND_URL || 'Missing'}</p>
-      </div>
+      </div> */}
     </div>
   );
 };

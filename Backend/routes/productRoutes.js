@@ -66,7 +66,6 @@ router.put("/:id", protect, admin, async (req, res) => {
                 countInStock,
                 category,
                 colors,
-                material,
                 gender,
                 images,
                 isFeatured,
@@ -84,7 +83,6 @@ router.put("/:id", protect, admin, async (req, res) => {
             product.countInStock = countInStock || product.countInStock;
             product.category = category || product.category;
             product.colors = colors || product.colors;
-            product.material = material || product.material;
             product.gender = gender || product.gender;
             product.images = images || product.images;
             product.isFeatured = isFeatured !== undefined ? isFeatured : product.isFeatured;

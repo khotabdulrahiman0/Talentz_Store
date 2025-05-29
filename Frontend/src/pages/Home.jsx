@@ -18,12 +18,10 @@ const Home = () => {
   const [bestSellerLoading, setBestSellerLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch products for the "Top Wears for Women's" section
+    // Fetch ALL products (remove specific filters to get all products)
     dispatch(
       fetchProductsByFilters({
-        gender: 'Women',
-        category: 'Top Wear',
-        limit: 8,
+        limit: 12, // You can adjust this number based on how many products you want to show
       })
     );
 
@@ -75,16 +73,16 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Top Wears for Women's Section */}
+      {/* All Products Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <h2 className="text-3xl font-bold text-center">Top Wears for Women's</h2>
+          <h2 className="text-3xl font-bold text-center">Featured Products</h2>
         </div>
         <ProductGrid products={products} loading={loading} error={error} />
       </div>
 
       <FeaturedCollection />
-      <FeaturesSection />
+      {/* <FeaturesSection /> */}
     </div>
   );
 };

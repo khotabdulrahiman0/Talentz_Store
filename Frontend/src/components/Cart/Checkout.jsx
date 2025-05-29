@@ -12,13 +12,14 @@ const Checkout = () => {
   const [usdPrice, setUsdPrice] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false); // For loader
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { cart, loading, error } = useSelector((state) => state.cart);
   const { user } = useSelector((state) => state.auth);
 
-  const DELIVERY_CHARGE = 50;
+  const DELIVERY_CHARGE = 0;
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   if (!BACKEND_URL) console.error("Backend URL is missing!");
 
@@ -53,6 +54,7 @@ const Checkout = () => {
       const rate = response.data.rates.USD;
       const convertedAmount = (amount * rate).toFixed(2);
       setUsdPrice(convertedAmount);
+      console.log("Converted INR to USD:", convertedAmount);
     } catch (error) {
       console.error("Error fetching exchange rate:", error);
       setUsdPrice(null);
@@ -103,7 +105,7 @@ const Checkout = () => {
 
         if (res.payload?._id) {
           setCheckoutId(res.payload._id);
-          console.log("Checkout created successfully:", res.payload._id);
+          console.log("Checkout created successfully:", res.payload._id, res.payload);
         } else {
           alert("Failed to create checkout. Please try again.");
         }
@@ -116,7 +118,7 @@ const Checkout = () => {
     setIsProcessing(false);
   };
 
-  // Updated: Immediately navigate to confirmation page after successful payment
+  // Await payment before finalize, show loader and log everything
   const handlePaymentSuccess = async (details) => {
     if (!checkoutId) {
       console.error("Checkout ID is missing.");
@@ -124,50 +126,43 @@ const Checkout = () => {
       return;
     }
 
+    setIsVerifyingPayment(true);
     try {
-      // 1. Mark payment as 'paid' in backend (async, don't block UI)
-      axios
-        .put(
-          `${BACKEND_URL}/api/checkout/${checkoutId}/pay`,
-          { paymentStatus: "paid", paymentDetails: details },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-              "Content-Type": "application/json",
-            },
-          }
-        )
-        .catch((err) => {
-          // Optionally show a warning but don't block navigation
-          console.warn("Backend pay endpoint error:", err);
-        });
+      console.log("Marking checkout as paid...", checkoutId, details);
+      await axios.put(
+        `${BACKEND_URL}/api/checkout/${checkoutId}/pay`,
+        { paymentStatus: "paid", paymentDetails: details },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("Checkout marked as paid, proceeding to finalize...");
 
-      // 2. Immediately show confirmation to user
+      await axios.post(
+        `${BACKEND_URL}/api/checkout/${checkoutId}/finalize`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("Order finalized successfully");
+
+      setIsVerifyingPayment(false);
       navigate("/order-confirmation", {
         state: {
           order: { _id: checkoutId },
           message: "Order placed successfully! Payment received.",
         },
       });
-
-      // 3. Optionally finalize asynchronously (don't block UI)
-      axios
-        .post(
-          `${BACKEND_URL}/api/checkout/${checkoutId}/finalize`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-              "Content-Type": "application/json",
-            },
-          }
-        )
-        .catch((err) => {
-          // Optionally log error or update order status in DB
-          console.warn("Finalize error:", err);
-        });
     } catch (error) {
-      console.error("Payment Error:", error.response?.data || error.message);
+      setIsVerifyingPayment(false);
+      console.error("Payment or order finalization error:", error?.response?.data || error.message);
       alert("Payment processing failed. Please contact support.");
     }
   };
@@ -185,6 +180,16 @@ const Checkout = () => {
   if (loading) return <p>Loading cart...</p>;
   if (error) return <p>Error: {error}</p>;
   if (!cart?.products?.length) return <p>Your cart is empty</p>;
+
+  // Loader overlay when payment is verifying
+  if (isVerifyingPayment) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-indigo-600 mb-6"></div>
+        <p className="text-lg text-gray-700 font-semibold">Verifying your payment, please wait...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -312,18 +317,7 @@ const Checkout = () => {
                     : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                 }`}
               >
-                Pay with Razorpay (India)
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("paypal")}
-                className={`w-full py-3 rounded-md font-semibold text-lg transition-colors ${
-                  paymentMethod === "paypal"
-                    ? "bg-yellow-500 text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                Pay with PayPal (Global)
+                Pay with Razorpay 
               </button>
             </div>
 
@@ -403,24 +397,12 @@ const Checkout = () => {
             <p className="text-green-600 mb-4 text-sm">
               ✓ Checkout session created successfully
             </p>
-            {paymentMethod === "paypal" ? (
-              usdPrice ? (
-                <PayPalButton
-                  amount={usdPrice}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                />
-              ) : (
-                <p className="text-gray-500">Fetching exchange rate...</p>
-              )
-            ) : (
-              <RazorpayButton
-                checkoutId={checkoutId}
-                amount={cart.totalPrice + DELIVERY_CHARGE}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-              />
-            )}
+            <RazorpayButton
+              checkoutId={checkoutId}
+              amount={cart.totalPrice + DELIVERY_CHARGE}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+            />
           </div>
         )}
       </div>

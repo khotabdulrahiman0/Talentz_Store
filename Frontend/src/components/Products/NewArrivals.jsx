@@ -28,7 +28,7 @@ const NewArrivals = () => {
 
   const scroll = (direction) => {
     if (scrollRef.current) {
-      const scrollAmount = direction === "left" ? -400 : 400;
+      const scrollAmount = direction === "left" ? -320 : 320;
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
   };
@@ -37,7 +37,7 @@ const NewArrivals = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft + clientWidth < scrollWidth);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 10);
     }
   };
 
@@ -83,12 +83,12 @@ const NewArrivals = () => {
 
           <div
             ref={scrollRef}
-            className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide py-4"
+            className="flex gap-4 overflow-x-auto scroll-smooth scrollbar-hide py-4"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {isLoading ? (
               [...Array(4)].map((_, index) => (
-                <div key={index} className="min-w-[300px] animate-pulse">
+                <div key={index} className="flex-shrink-0 w-72 animate-pulse">
                   <div className="aspect-[3/4] bg-gray-200 rounded-lg mb-3" />
                   <div className="h-4 bg-gray-300 w-2/3 mb-2 rounded" />
                   <div className="h-4 bg-gray-300 w-1/3 rounded" />
@@ -99,22 +99,47 @@ const NewArrivals = () => {
                 <Link
                   key={product._id}
                   to={`/product/${product._id}`}
-                  className="min-w-[300px] group shadow-md hover:shadow-lg rounded-lg overflow-hidden bg-white"
+                  className="flex-shrink-0 w-72 group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
                 >
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
                     <img 
                       src={product.images?.[0]?.url || "/placeholder.jpg"}
                       alt={product.name}
                       className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
                     />
+                    {/* Optional: Add a "New" badge */}
+                    <div className="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-semibold px-2 py-1 rounded">
+                      NEW
+                    </div>
                   </div>
                   <div className="p-4">
-                    <h3 className="text-md font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-2">
                       {product.name}
                     </h3>
-                    <p className="mt-1 text-md text-gray-600 font-medium">
-                    ₹{product.price}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg font-bold text-gray-900">
+                        ₹{product.price}
+                      </p>
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <p className="text-sm text-gray-500 line-through">
+                          ₹{product.originalPrice}
+                        </p>
+                      )}
+                    </div>
+                    {/* Optional: Add rating or other product info */}
+                    {/* {product.rating && (
+                      <div className="flex items-center mt-2">
+                        <div className="flex text-yellow-400">
+                          {[...Array(5)].map((_, i) => (
+                            <span key={i} className={i < Math.floor(product.rating) ? "★" : "☆"}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-600 ml-2">({product.reviewCount || 0})</span>
+                      </div>
+                    )} */}
                   </div>
                 </Link>
               ))
@@ -136,6 +161,12 @@ const NewArrivals = () => {
         {`
           .scrollbar-hide::-webkit-scrollbar {
             display: none;
+          }
+          .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
           }
         `}
       </style>
