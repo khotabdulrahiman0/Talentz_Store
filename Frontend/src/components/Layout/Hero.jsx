@@ -1,5 +1,5 @@
 import React from 'react';
-import heroImg from "../../assets/tzzz.jpg";
+import heroImg from "../../assets/home.jpg";
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Truck, RefreshCw } from 'react-feather';
 

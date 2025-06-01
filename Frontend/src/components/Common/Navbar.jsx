@@ -6,6 +6,8 @@ import SearchBar from "./SearchBar";
 import CartDrawer from "../Layout/CartDrawer";
 import { IoMdClose } from "react-icons/io";
 import { useSelector } from "react-redux";
+import logo from "../../assets/logo.jpg"; // adjust path based on your folder structure
+
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
